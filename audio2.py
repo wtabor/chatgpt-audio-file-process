@@ -4,7 +4,7 @@ import openai, config
 openai.api_key = config.OPENAI_API_KEY
 
 # Define initial system message
-messages = [{"role": "system", "content": 'You are a personal assistant for an investment banker.'}]
+messages = [{"role": "system", "content": 'Can you summarize these meeting notes?.'}]
 
 # Define available prompts for user to choose from
 prompts = [
