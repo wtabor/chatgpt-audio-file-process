@@ -4,12 +4,14 @@ import openai, config
 openai.api_key = config.OPENAI_API_KEY
 
 # Define initial system message
-messages = [{"role": "system", "content":''}]
+messages = [{"role": "system", "content": 'You are a personal assistant for an investment banker.'}]
 
 # Define available prompts for user to choose from
 prompts = [
-    "1. Create a detailed summary outline of the transcription in meeting notes organized by discussion topics and 2. List action items and key metrics or numbers discussed; use appropriate formatting for all notes such as bullet points, numbered lists, bold or italicized text to enhance the organization and readability of the notes.",
+    "Introduce yourself and tell me what you do.",
+    "What are your top three priorities for the week?",
     "Can you summarize the meeting notes?",
+    "What are your thoughts on the latest market trends?",
 ]
 
 def transcribe(prompt, audio):
@@ -20,15 +22,16 @@ def transcribe(prompt, audio):
 
     messages.append({"role": "user", "content": transcript["text"]})
 
+    # Apply prompt to transcript
+    if prompt:
+        transcript["text"] = f"{prompt} {transcript['text']}"
+
     # Call OpenAI API only if there is a user message
     if messages[-1]["role"] == "user":
-        # Use selected prompt as the instructions for OpenAI
-        prompt_text = prompt
-
         response = openai.Completion.create(
             engine="text-davinci-003",
-            prompt='\n'.join([m["content"] for m in messages] + [prompt_text]),
-            max_tokens=3000,
+            prompt='\n'.join([f'{m["role"]}: {m["content"]}' for m in messages] + [transcript["text"]]),
+            max_tokens=1024,
             n=1,
             stop=None,
             temperature=0.7,
@@ -37,28 +40,18 @@ def transcribe(prompt, audio):
         system_message = response.choices[0].text.strip()
         messages.append({"role": "system", "content": system_message})
 
-        chat_transcript = ""
-    for message in messages:
-        if message["role"] == "system":
-            chat_transcript += message["content"] + "\n\n"
-        else:
-            chat_transcript += message["content"] + "\n\n"
-
-    return chat_transcript
-
-
-    """ chat_transcript = ""
+    chat_transcript = ""
     for message in messages:
         chat_transcript += message["role"] + ": " + message["content"] + "\n\n"
 
-    return chat_transcript """
+    return chat_transcript
 
 # Set up Gradio interface
 ui = gr.Interface(
     fn=transcribe,
     inputs=[
-        gr.Dropdown(choices=prompts, label="Choose a prompt:", default=[0]),
-        gr.Audio(source="upload", type="filepath", label="Upload your audio:")
+        gr.Dropdown(choices=prompts, label="Choose a prompt:"),
+        gr.Audio(label="Upload your audio:")
     ],
     outputs="text",
     title="Investment Banker Personal Assistant",
