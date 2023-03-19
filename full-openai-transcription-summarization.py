@@ -1,7 +1,8 @@
 import gradio as gr
-import openai, config
+import openai
+import os
 
-openai.api_key = config.OPENAI_API_KEY
+openai.api_key = os.environ['OPENAI_API_KEY']
 
 # Define initial system message
 messages = [{"role": "system", "content":''}]
